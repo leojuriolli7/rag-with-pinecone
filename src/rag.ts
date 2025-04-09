@@ -14,7 +14,13 @@ const index = pinecone.index(process.env.PINECONE_INDEX_NAME!);
 const EMBEDDING_MODEL = "text-embedding-3-small";
 const TOP_K = 5;
 
-async function search(query: string, namespace: string) {
+/**
+ * Search for a query in a specific Pinecone namespace.
+ * This function embeds the query using OpenAI's embedding model,
+ * then queries Pinecone for the most relevant results.
+ * It logs the results for debugging and returns the context.
+ */
+export async function search(query: string, namespace: string) {
   // 1. Embed the query
   const embeddingResponse = await openai.embeddings.create({
     input: query,
@@ -30,7 +36,7 @@ async function search(query: string, namespace: string) {
     includeMetadata: true,
   });
 
-  // 3. Display results
+  // 3. Log results for debugging
   console.log(`\n🔎 Top ${TOP_K} results for query: "${query}"\n`);
 
   result.matches?.forEach((match, i) => {
@@ -42,37 +48,23 @@ async function search(query: string, namespace: string) {
     );
   });
 
-  const systemPrompt = `
-  You are a helpful medical assistant. Answer the question below using only the provided context.
-  If the context does not contain the answer, say "I couldn't find that in the book."
-  `;
-
   const context = result.matches
     ?.map((match) => match.metadata?.content)
     .join("\n\n");
 
-  // 4. Get Chat GPT response based on the context above:
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o",
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: `Context:\n${context}\n\nQuestion: ${query}` },
-    ],
-  });
-
-  console.log("\n🧠 GPT Answer:\n");
-  console.log(completion.choices[0].message.content);
+  return context;
 }
 
 // CLI usage
-const [, , ...cliArgs] = process.argv;
+if (require.main === module) {
+  const [, , query, namespace] = process.argv;
 
-if (cliArgs.length === 0) {
-  console.error('Usage: ts-node src/rag.ts "Your medical query here"');
-  process.exit(1);
+  if (!query || !namespace) {
+    console.error(
+      'Usage: ts-node src/app/rag.ts "Your query here" "pinecone-index-namespace"'
+    );
+    process.exit(1);
+  }
+
+  search(query, namespace);
 }
-
-const query = cliArgs.join(" ");
-const namespace = "current-medical-diagnosis-and-treatment-2025";
-
-search(query, namespace);
