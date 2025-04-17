@@ -5,6 +5,12 @@ This repository is used to:
 3. Embed these chunks with OpenAI's `text-embedding-3-small` model and upload them to a Pinecone index in batches, with retry functionality. The pinecone upload will contain metadata such as the chunkIndex, the book name and the chunk's text content.
 4. Test the RAG search functionality
 
+## Requirements: 
+
+1. Create Pinecone account, and create a database: https://www.pinecone.io/ (And an index, or optionally store everything in the same database and change the code inside "embed.ts" slightly)
+2. Create OpenAI account and get API key: https://platform.openai.com/
+3. If using Gemini, follow steps for using OpenAI API with Gemini: https://ai.google.dev/gemini-api/docs/openai#javascript
+
 ## Commands:
 
 Extract PDF to text:
